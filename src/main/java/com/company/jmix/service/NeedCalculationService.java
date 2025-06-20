@@ -1,81 +1,106 @@
 package com.company.jmix.service;
 
-import com.company.jmix.entity.*;
+import com.company.jmix.entity.Need;
+import com.company.jmix.entity.NeedCategory;
+import com.company.jmix.entity.NeedPeriod;
 import io.jmix.core.DataManager;
-import io.jmix.core.Metadata;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class NeedCalculationService {
-    private final DataManager dataManager;
-    private final Metadata metadata;
-
-    public NeedCalculationService(DataManager dataManager, Metadata metadata) {
-        this.dataManager = dataManager;
-        this.metadata = metadata;
-    }
-
-    @Transactional
-    public CalculationResult calculateTotalNeeds(NeedPeriod period) {
-        CalculationResult result = new CalculationResult();
-
-        // 1. Удаляем старые итоговые потребности
-        List<Need> existingTotals = dataManager.load(Need.class)
-                .query("select n from Need n where n.period = :period and n.isTotal = true")
-                .parameter("period", period)
-                .list();
-
-        result.setRemoved(existingTotals.size());
-        existingTotals.forEach(dataManager::remove);
-
-        // 2. Группируем утвержденные потребности по виду
-        List<Need> approvedNeeds = dataManager.load(Need.class)
-                .query("select n from Need n where n.period = :period and n.approved = true")
-                .parameter("period", period)
-                .list();
-
-        Map<NeedCategory, Integer> categorySums = new HashMap<>();
-        for (Need need : approvedNeeds) {
-            categorySums.merge(need.getCategory(), need.getQuantity(), Integer::sum);
-        }
-
-        // 3. Создаем новые итоговые записи
-        for (Map.Entry<NeedCategory, Integer> entry : categorySums.entrySet()) {
-            Need totalNeed = metadata.create(Need.class);
-            totalNeed.setPeriod(period);
-            totalNeed.setCategory(entry.getKey());
-            totalNeed.setQuantity(entry.getValue());
-            totalNeed.setIsTotal(true);
-            totalNeed.setJustification("Итоговая потребность");
-            totalNeed.setCreatedBy("system");
-
-            dataManager.save(totalNeed);
-            result.incrementAdded();
-        }
-
-        // 4. Помечаем потребности как учтенные
-        approvedNeeds.forEach(need -> {
-            need.setAccounted(true);
-            dataManager.save(need);
-        });
-
-        return result;
-    }
 
     public static class CalculationResult {
-        private int added;
+        private String added;
         private int removed;
+        private int updated;
 
-        // Getters and setters
-        public int getAdded() { return added; }
-        public void setAdded(int added) { this.added = added; }
-        public void incrementAdded() { this.added++; }
+        public CalculationResult(int added, int removed, int updated) {
+            this.added = String.valueOf(added);
+            this.removed = removed;
+            this.updated = updated;
+        }
+
+        // Геттеры
+        public String getAdded() { return added; }
         public int getRemoved() { return removed; }
-        public void setRemoved(int removed) { this.removed = removed; }
+        public int getUpdated() { return updated; }
+
+        @Override
+        public String toString() {
+            return String.format("Added: %d, Removed: %d, Updated: %d", added, removed, updated);
+        }
+    }
+
+    @Autowired
+    private DataManager dataManager;
+
+    public CalculationResult calculateTotalNeeds(NeedPeriod period) {
+        int added = 0;
+        int removed = 0;
+        int updated = 0;
+
+        // 1. Получаем все текущие итоговые потребности для периода
+        List<Need> existingTotals = dataManager.load(Need.class)
+                .query("SELECT n FROM Need n WHERE n.period = :period AND n.isTotal = true")
+                .parameter("period", period)
+                .list();
+
+        // 2. Получаем все обычные потребности для периода
+        List<Need> regularNeeds = dataManager.load(Need.class)
+                .query("SELECT n FROM Need n WHERE n.period = :period AND n.isTotal = false AND n.approved = true")
+                .parameter("period", period)
+                .list();
+
+        // 3. Группируем обычные потребности по категориям
+        Map<NeedCategory, Integer> categorySums = new HashMap<>();
+        for (Need regularNeed : regularNeeds) {
+            categorySums.merge(regularNeed.getCategory(), regularNeed.getQuantity(), Integer::sum);
+        }
+
+        // 4. Обновляем или создаем итоговые потребности
+        for (Map.Entry<NeedCategory, Integer> entry : categorySums.entrySet()) {
+            NeedCategory category = entry.getKey();
+            int totalQuantity = entry.getValue();
+
+            Optional<Need> existingTotal = existingTotals.stream()
+                    .filter(n -> n.getCategory().equals(category))
+                    .findFirst();
+
+            if (existingTotal.isPresent()) {
+                // Обновляем существующую итоговую потребность
+                Need total = existingTotal.get();
+                if (!total.getQuantity().equals(totalQuantity)) {
+                    total.setQuantity(totalQuantity);
+                    dataManager.save(total);
+                    updated++;
+                }
+            } else {
+                // Создаем новую итоговую потребность
+                Need newTotal = dataManager.create(Need.class);
+                newTotal.setPeriod(period);
+                newTotal.setCategory(category);
+                newTotal.setQuantity(totalQuantity);
+                newTotal.setIsTotal(true);
+                newTotal.setApproved(false);
+                dataManager.save(newTotal);
+                added++;
+            }
+        }
+
+        // 5. Удаляем устаревшие итоговые потребности
+        for (Need total : existingTotals) {
+            if (!categorySums.containsKey(total.getCategory())) {
+                dataManager.remove(total);
+                removed++;
+            }
+        }
+
+        return new CalculationResult(added, removed, updated);
     }
 }

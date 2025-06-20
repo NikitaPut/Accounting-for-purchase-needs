@@ -98,7 +98,14 @@ public class NeedListView extends StandardListView<Need> {
         }
 
         NeedCalculationService.CalculationResult result = needCalculationService.calculateTotalNeeds(period);
-        String message = String.format(messages.getMessage("need.calculationResult"), result.getAdded(), result.getRemoved());
+
+        String message = messages.formatMessage(
+                "Добавлено: {0}, Удалено: {1}, Обновлено: {2}",
+                result.getAdded(),
+                result.getRemoved(),
+                result.getUpdated()
+        );
+
         notifications.show(message);
         needsDl.load();
     }
