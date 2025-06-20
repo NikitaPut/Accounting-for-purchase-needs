@@ -7,11 +7,13 @@ import com.company.jmix.view.main.MainView;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
+import io.jmix.flowui.component.combobox.JmixComboBox;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.model.InstanceContainer;
 import io.jmix.flowui.view.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
 import java.util.Optional;
 
 @ViewController("Need.detail")
@@ -29,20 +31,30 @@ public class NeedDetailView extends StandardDetailView<Need> {
     @ViewComponent
     private CollectionContainer<NeedCategory> categoriesDc;
 
+    @ViewComponent
+    private JmixComboBox<Integer> periodField;
+
+    @ViewComponent
+    private JmixComboBox<Integer> categoryField;
+
     @Autowired
     private DataManager dataManager;
 
     @Subscribe
     public void onInit(InitEvent event) {
+        periodField.setItems();
+        categoryField.setItems();
         loadPeriods();
         loadCategories();
     }
 
     private void loadPeriods() {
-        periodsDc.setItems(dataManager.load(NeedPeriod.class)
-                .query("select p from NeedPeriod p order by p.id desc")
-                .fetchPlan(FetchPlan.INSTANCE_NAME)
-                .list());
+        List<NeedPeriod> periods = dataManager.load(NeedPeriod.class)
+                        .query("select p from NeedPeriod p order by p.id desc")
+                        .fetchPlan(FetchPlan.INSTANCE_NAME)
+                        .list();
+        System.out.println("Loaded periods: " + periods.size());
+        periodsDc.setItems(periods);
     }
 
     private void loadCategories() {
@@ -58,13 +70,20 @@ public class NeedDetailView extends StandardDetailView<Need> {
         if (need.getId() == null) {
             initializeNewNeed(need);
         }
+
+        // Дополнительная проверка (на случай если загрузка в onInit не сработала)
+        if (periodsDc.getItems().isEmpty()) {
+            loadPeriods();
+        }
+        if (categoriesDc.getItems().isEmpty()) {
+            loadCategories();
+        }
     }
 
     private void initializeNewNeed(Need need) {
         need.setApproved(false);
         need.setAccounted(false);
         need.setIsTotal(false);
-        setLatestPeriod(need);
     }
 
     private void setLatestPeriod(Need need) {
