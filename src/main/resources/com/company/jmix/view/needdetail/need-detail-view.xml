@@ -10,7 +10,6 @@
                 <property name="category" fetchPlan="_instance_name"/>
             </fetchPlan>
         </instance>
-        <collection id="periodsDc" class="com.company.jmix.entity.NeedPeriod"/>
         <collection id="categoriesDc" class="com.company.jmix.entity.NeedCategory"/>
     </data>
 
@@ -21,17 +20,10 @@
 
     <layout>
         <formLayout id="formLayout" width="100%">
-            <comboBox id="periodField" property="period"
-                      dataContainer="needDc"
-                      label="Период"
-                      required="true"
-            />
-
-            <comboBox id="categoryField" property="category"
-                      dataContainer="needDc"
+            <comboBox id="categoryField" dataContainer="needDc" property="category"
                       label="Категория"
-                      required="true"
-            />
+                      required="true">
+            </comboBox>
 
             <integerField id="quantityField" property="quantity"
                           label="Количество"

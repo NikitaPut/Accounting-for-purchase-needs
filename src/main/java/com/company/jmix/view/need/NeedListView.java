@@ -6,10 +6,13 @@ import com.company.jmix.entity.NeedCategory;
 import com.company.jmix.service.NeedCalculationService;
 import com.company.jmix.view.main.MainView;
 import com.company.jmix.view.needdetail.NeedDetailView;
+import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
 import io.jmix.core.Messages;
+import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.Notifications;
 import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.component.combobox.JmixComboBox;
@@ -46,13 +49,31 @@ public class NeedListView extends StandardListView<Need> {
     @Autowired
     private Messages messages;
     @Autowired
-    private DialogWindow dialogWindowManager;
+    private DialogWindows dialogWindows;
 
     @Subscribe
     public void onInit(InitEvent event) {
         // Начальная загрузка данных
         needsDl.load();
     }
+
+    @Subscribe("createBtn") // ID кнопки создания из XML
+    public void onCreateBtnClick(ClickEvent<Button> event) {
+        // Создаем новую сущность
+        Need newNeed = dataManager.create(Need.class);
+
+        // Открываем диалоговое окно редактирования
+        DialogWindow<NeedDetailView> dialog = dialogWindows.detail(this, Need.class)
+                .editEntity(newNeed)
+                .withViewClass(NeedDetailView.class)
+                .build();
+
+        NeedDetailView view = dialog.getView();
+        view.setDialogWindow(dialog); // Передаем ссылку на диалог
+
+        dialog.open();
+    }
+
 
     @Subscribe("generateTotalAction")
     public void onGenerateTotal(ActionPerformedEvent event) {

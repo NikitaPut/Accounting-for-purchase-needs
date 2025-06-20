@@ -1,14 +1,12 @@
 package com.company.jmix.view.needdetail;
 
-import com.company.jmix.entity.Need;
-import com.company.jmix.entity.NeedPeriod;
-import com.company.jmix.entity.NeedCategory;
+import com.company.jmix.entity.*;
 import com.company.jmix.view.main.MainView;
+import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.DataManager;
-import io.jmix.core.FetchPlan;
-import io.jmix.flowui.model.CollectionContainer;
-import io.jmix.flowui.model.InstanceContainer;
+import io.jmix.flowui.model.*;
 import io.jmix.flowui.view.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -20,11 +18,10 @@ import java.util.Optional;
 @Route(value = "need-detail-list", layout = MainView.class)
 public class NeedDetailView extends StandardDetailView<Need> {
 
-    @ViewComponent
-    private InstanceContainer<Need> needDc;
+    private DialogWindow<NeedDetailView> dialogWindow;
 
     @ViewComponent
-    private CollectionContainer<NeedPeriod> periodsDc;
+    private InstanceContainer<Need> needDc;
 
     @ViewComponent
     private CollectionContainer<NeedCategory> categoriesDc;
@@ -34,24 +31,21 @@ public class NeedDetailView extends StandardDetailView<Need> {
 
     @Subscribe
     public void onInit(InitEvent event) {
-        // Загрузка данных с предопределенным fetchPlan
-        loadPeriods();
         loadCategories();
     }
 
-    private void loadPeriods() {
-        // Используем предопределенный fetchPlan _instance_name, который включает базовые атрибуты
-        periodsDc.setItems(dataManager.load(NeedPeriod.class)
-                .query("select p from NeedPeriod p order by p.id desc")
-                .fetchPlan(FetchPlan.INSTANCE_NAME) // _instance_name включает name
-                .list());
+    @Subscribe("closeBtn")
+    public void onCloseBtnClick(ClickEvent<Button> event) {
+        dialogWindow.close();
+    }
+
+    public void setDialogWindow(DialogWindow<NeedDetailView> dialogWindow) {
+        this.dialogWindow = dialogWindow;
     }
 
     private void loadCategories() {
-        // Используем предопределенный fetchPlan _instance_name, который включает name
         categoriesDc.setItems(dataManager.load(NeedCategory.class)
                 .query("select c from NeedCategory c order by c.name")
-                .fetchPlan(FetchPlan.INSTANCE_NAME) // _instance_name включает name
                 .list());
     }
 
@@ -74,27 +68,37 @@ public class NeedDetailView extends StandardDetailView<Need> {
     }
 
     private void setLatestPeriod(Need need) {
-        // Загружаем с предопределенным fetchPlan
-        Optional<NeedPeriod> latestPeriod = dataManager.load(NeedPeriod.class)
+        dataManager.load(NeedPeriod.class)
                 .query("select p from NeedPeriod p order by p.id desc")
-                .fetchPlan(FetchPlan.INSTANCE_NAME)
-                .optional();
-
-        latestPeriod.ifPresent(need::setPeriod);
+                .maxResults(1)
+                .optional()
+                .ifPresent(need::setPeriod);
     }
 
     @Subscribe
     public void onValidation(ValidationEvent event) {
         Need need = getEditedEntity();
 
+        validateQuantity(need, event);
+        validatePeriod(need, event);
+        validateCategory(need, event);
+    }
+
+    private void validateQuantity(Need need, ValidationEvent event) {
         if (need.getQuantity() != null && need.getQuantity() <= 0) {
             event.getErrors().add("Количество должно быть положительным");
         }
+    }
+
+    private void validatePeriod(Need need, ValidationEvent event) {
         if (need.getPeriod() == null) {
-            event.getErrors().add("Период должен быть указан");
+            event.getErrors().add("Необходимо указать период");
         }
+    }
+
+    private void validateCategory(Need need, ValidationEvent event) {
         if (need.getCategory() == null) {
-            event.getErrors().add("Категория должна быть указана");
+            event.getErrors().add("Необходимо указать категорию");
         }
     }
 }
