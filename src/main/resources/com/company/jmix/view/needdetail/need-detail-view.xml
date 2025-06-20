@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="Создать потребность"
+      focusComponent="formLayout">
+
+    <data>
+        <instance id="needDc" class="com.company.jmix.entity.Need">
+            <fetchPlan extends="_base">
+                <property name="period" fetchPlan="_instance_name"/>
+                <property name="category" fetchPlan="_instance_name"/>
+            </fetchPlan>
+        </instance>
+        <collection id="periodsDc" class="com.company.jmix.entity.NeedPeriod"/>
+        <collection id="categoriesDc" class="com.company.jmix.entity.NeedCategory"/>
+    </data>
+
+    <actions>
+        <action id="saveAction" type="detail_save" text="Сохранить"/>
+        <action id="closeAction" type="detail_close" text="Закрыть"/>
+    </actions>
+
+    <layout>
+        <formLayout id="formLayout" width="100%">
+            <comboBox id="periodField" property="period"
+                      dataContainer="needDc"
+                      label="Период"
+                      required="true"
+            />
+
+            <comboBox id="categoryField" property="category"
+                      dataContainer="needDc"
+                      label="Категория"
+                      required="true"
+            />
+
+            <integerField id="quantityField" property="quantity"
+                          label="Количество"
+                          required="true"/>
+
+            <textArea id="justificationField" property="justification"
+                      label="Обоснование"
+                      width="100%"/>
+
+            <textField id="applicantField" property="applicant"
+                       label="Заявитель"/>
+
+            <hbox id="buttonPanel" classNames="buttons-panel">
+                <button id="saveBtn" action="saveAction" themeNames="primary"/>
+                <button id="closeBtn" action="closeAction"/>
+            </hbox>
+        </formLayout>
+    </layout>
+</view>

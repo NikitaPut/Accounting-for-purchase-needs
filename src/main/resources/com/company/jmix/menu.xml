@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<menu-config xmlns="http://jmix.io/schema/flowui/menu">
+
+    <menu id="application" title="msg://com.company.jmix/menu.application.title" opened="true">
+        <item view="User.list" title="msg://com.company.jmix.view.user/UserListView.title"/>
+        <item view="NeedType.list" title="msg://com.company.jmix.view.needtype/needTypeListView.title"/>
+        <item view="NeedCategory.list" title="msg://com.company.jmix.view.needcategory/needCategoryListView.title"/>
+        <item view="NeedPeriod.list" title="msg://com.company.jmix.view.needperiod/needPeriodListView.title"/>
+        <item view="MainView" title="msg://com.company.jmix.view.main.main/mainview.title"/>
+        <item view="Need.browse" title="msg://com.company.jmix.view.need/needListView.title"/>
+        <item view="Need.detail" title="msg://com.company.jmix.view.needdetail/needDetailView.title"/>
+    </menu>
+
+</menu-config>
