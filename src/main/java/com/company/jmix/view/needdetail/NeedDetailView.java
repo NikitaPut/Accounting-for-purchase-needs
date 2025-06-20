@@ -4,8 +4,6 @@ import com.company.jmix.entity.Need;
 import com.company.jmix.entity.NeedPeriod;
 import com.company.jmix.entity.NeedCategory;
 import com.company.jmix.view.main.MainView;
-import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
@@ -21,8 +19,6 @@ import java.util.Optional;
 @EditedEntityContainer("needDc")
 @Route(value = "need-detail-list", layout = MainView.class)
 public class NeedDetailView extends StandardDetailView<Need> {
-
-    private DialogWindow<NeedDetailView> dialogWindow;
 
     @ViewComponent
     private InstanceContainer<Need> needDc;
@@ -42,15 +38,6 @@ public class NeedDetailView extends StandardDetailView<Need> {
         loadCategories();
     }
 
-    @Subscribe("closeBtn")
-    public void onCloseBtnClick(ClickEvent<Button> event) {
-        dialogWindow.close();
-    }
-
-    public void setDialogWindow(DialogWindow<NeedDetailView> dialogWindow) {
-        this.dialogWindow = dialogWindow;
-    }
-
     private void loadPeriods() {
         periodsDc.setItems(dataManager.load(NeedPeriod.class)
                 .query("select p from NeedPeriod p order by p.id desc")
@@ -68,7 +55,6 @@ public class NeedDetailView extends StandardDetailView<Need> {
     @Subscribe
     public void onBeforeShow(BeforeShowEvent event) {
         Need need = getEditedEntity();
-
         if (need.getId() == null) {
             initializeNewNeed(need);
         }
@@ -86,14 +72,12 @@ public class NeedDetailView extends StandardDetailView<Need> {
                 .query("select p from NeedPeriod p order by p.id desc")
                 .fetchPlan(FetchPlan.INSTANCE_NAME)
                 .optional();
-
         latestPeriod.ifPresent(need::setPeriod);
     }
 
     @Subscribe
     public void onValidation(ValidationEvent event) {
         Need need = getEditedEntity();
-
         if (need.getQuantity() != null && need.getQuantity() <= 0) {
             event.getErrors().add("Количество должно быть положительным");
         }

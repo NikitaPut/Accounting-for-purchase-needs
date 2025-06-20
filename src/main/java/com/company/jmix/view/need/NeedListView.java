@@ -1,27 +1,27 @@
 package com.company.jmix.view.need;
 
 import com.company.jmix.entity.Need;
-import com.company.jmix.entity.NeedCategory;
 import com.company.jmix.entity.NeedPeriod;
+import com.company.jmix.entity.NeedCategory;
 import com.company.jmix.service.NeedCalculationService;
 import com.company.jmix.view.main.MainView;
 import com.company.jmix.view.needdetail.NeedDetailView;
-import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
 import io.jmix.core.Messages;
 import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.Notifications;
+// import io.jmix.flowui.component.excelexporter.ExcelExporter;
 import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.kit.action.ActionPerformedEvent;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.model.CollectionLoader;
 import io.jmix.flowui.view.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @ViewController("Need.browse")
@@ -48,25 +48,39 @@ public class NeedListView extends StandardListView<Need> {
     private Messages messages;
     @Autowired
     private DialogWindows dialogWindows;
+    @Autowired
+    private ApplicationContext applicationContext;
 
     @Subscribe
     public void onInit(InitEvent event) {
         needsDl.load();
     }
 
-    @Subscribe("createBtn")
-    public void onCreateBtnClick(ClickEvent<Button> event) {
-        Need newNeed = dataManager.create(Need.class);
+    @Subscribe("createAction")
+    public void onCreateAction(ActionPerformedEvent event) {
+        Optional<NeedPeriod> lastPeriod = dataManager.load(NeedPeriod.class)
+                .query("select p from NeedPeriod p order by p.id desc")
+                .fetchPlan(FetchPlan.INSTANCE_NAME)
+                .optional();
 
-        DialogWindow<NeedDetailView> dialog = dialogWindows.detail(this, Need.class)
+        if (lastPeriod.isEmpty()) {
+            notifications.show(messages.getMessage("need.noPeriodCreate"));
+            return;
+        }
+
+        Need newNeed = dataManager.create(Need.class);
+        newNeed.setPeriod(lastPeriod.get());
+
+        dialogWindows.detail(this, Need.class)
                 .editEntity(newNeed)
                 .withViewClass(NeedDetailView.class)
-                .build();
-
-        NeedDetailView view = dialog.getView();
-        view.setDialogWindow(dialog);
-
-        dialog.open();
+                .open()
+                .addAfterCloseListener(afterCloseEvent -> {
+                    if (afterCloseEvent.closedWith(StandardOutcome.SAVE)) {
+                        needsDl.load();
+                        notifications.show(messages.getMessage("need.created"));
+                    }
+                });
     }
 
     @Subscribe("generateTotalAction")
@@ -91,45 +105,20 @@ public class NeedListView extends StandardListView<Need> {
 
     @Subscribe("approveAction")
     public void onApprove(ActionPerformedEvent event) {
-        Need need = needsDataGrid.getSingleSelectedItem();
-        if (need == null) {
+        Need selected = needsDataGrid.getSingleSelectedItem();
+        if (selected == null) {
             notifications.show(messages.getMessage("need.select"));
             return;
         }
 
-        need.setApproved(!need.getApproved());
+        selected.setApproved(!selected.getApproved());
 
-        if (need.getApproved() && need.getPeriod().getIsOpen() && hasTotalForPeriod(need.getPeriod())) {
+        if (selected.getApproved() && selected.getPeriod().getIsOpen() && hasTotalForPeriod(selected.getPeriod())) {
             notifications.show(messages.getMessage("need.notAccounted"));
         }
 
-        dataManager.save(need);
+        dataManager.save(selected);
         needsDl.load();
-    }
-
-    @Subscribe("createAction")
-    public void onCreateAction(ActionPerformedEvent event) {
-        Optional<NeedPeriod> lastPeriod = dataManager.load(NeedPeriod.class)
-                .query("select p from NeedPeriod p order by p.id desc")
-                .fetchPlan(FetchPlan.INSTANCE_NAME)
-                .optional();
-
-        if (lastPeriod.isEmpty()) {
-            notifications.show(messages.getMessage("need.noPeriodCreate"));
-            return;
-        }
-
-        Need newNeed = dataManager.create(Need.class);
-        newNeed.setPeriod(lastPeriod.get());
-
-        List<NeedPeriod> periods = dataManager.load(NeedPeriod.class)
-                .query("select p from NeedPeriod p order by p.id desc")
-                .fetchPlan(FetchPlan.INSTANCE_NAME)
-                .list();
-        List<NeedCategory> categories = dataManager.load(NeedCategory.class)
-                .query("select c from Category c order by c.name")
-                .fetchPlan(FetchPlan.INSTANCE_NAME)
-                .list();
     }
 
     @Subscribe("exportAction")
@@ -140,6 +129,9 @@ public class NeedListView extends StandardListView<Need> {
         }
 
         try {
+//            ExcelExporter excelExporter = applicationContext.getBean(ExcelExporter.class);
+//            excelExporter.setFileName("Needs_" + LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm")) + ".xlsx");
+//            excelExporter.exportDataGrid(needsDataGrid);
             notifications.show(messages.getMessage("need.exportSuccess"));
         } catch (Exception e) {
             notifications.show(messages.formatMessage("need.exportError", e.getMessage()));

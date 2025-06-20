@@ -1,67 +1,38 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <view xmlns="http://jmix.io/schema/flowui/view"
-      xmlns:j="http://jmix.io/schema/flowui/view"
-      title="msg://need.title">
+      title="Список потребностей"
+      focusComponent="needsDataGrid">
     <data>
         <collection id="needsDc" class="com.company.jmix.entity.Need">
-            <fetchPlan extends="_base">
-                <property name="period" fetchPlan="_instance_name"/>
-                <property name="category" fetchPlan="_instance_name"/>
-            </fetchPlan>
-            <loader id="needsDl">
-                <query><![CDATA[select e from Need e where e.period = :period]]></query>
-            </loader>
+            <fetchPlan extends="_base"/>
+            <loader id="needsDl"/>
         </collection>
     </data>
-
-    <facets>
-        <dataLoadCoordinator auto="true"/>
-    </facets>
-
     <actions>
-        <action id="createAction" type="list_create" text="msg://need.create" icon="vaadin:plus-circle"/>
-        <action id="editAction" type="list_edit" text="msg://need.edit"/>
-        <action id="removeAction" type="list_remove" text="msg://need.remove"/>
-        <action id="refreshAction" type="list_refresh" text="msg://need.refresh"/>
-        <action id="generateTotalAction" text="msg://need.generateTotal"/>
-        <action id="approveAction" text="msg://need.approve"/>
-        <action id="exportAction" text="msg://need.export" icon="vaadin:download"/>
+        <action id="createAction" type="list_create" text="Создать"/>
+        <action id="generateTotalAction" text="Сгенерировать итог"/>
+        <action id="approveAction" text="Утвердить"/>
+        <action id="exportAction" text="Экспорт"/>
     </actions>
-
     <layout>
-        <j:dataGrid id="needsDataGrid" width="100%" dataContainer="needsDc">
-            <j:actions>
-                <j:action id="remove" type="list_remove"/>
-                <j:action id="gridCreate" action="createAction"/>
-                <j:action id="gridEdit" action="editAction"/>
-                <j:action id="gridRemove" action="removeAction"/>
-                <j:action id="gridRefresh" action="refreshAction"/>
-                <j:action id="gridExport" action="exportAction"/>
-            </j:actions>
-            <j:columns>
-                <j:column property="period.name" caption="msg://need.period"/>
-                <j:column property="category.name" caption="msg://need.category"/>
-                <j:column property="quantity" caption="msg://need.quantity"/>
-                <j:column property="approved" caption="msg://need.approved">
-                    <j:checkbox editable="false"/>
-                </j:column>
-                <j:column property="accounted" caption="msg://need.accounted">
-                    <j:checkbox editable="false"/>
-                </j:column>
-                <j:column property="isTotal" caption="msg://need.isTotal">
-                    <j:checkbox editable="false"/>
-                </j:column>
-            </j:columns>
-        </j:dataGrid>
-
-        <hbox id="buttonsPanel" classNames="buttons-panel">
-            <button action="createAction" icon="vaadin:plus-circle"/>
-            <button action="editAction"/>
-            <button action="removeAction"/>
-            <button action="refreshAction"/>
-            <button action="generateTotalAction"/>
-            <button action="approveAction"/>
-            <button action="exportAction" icon="vaadin:download"/>
+        <dataGrid id="needsDataGrid" dataContainer="needsDc">
+            <actions>
+                <action id="create" type="list_create"/>
+                <action id="remove" type="list_remove"/>
+            </actions>
+            <columns>
+                <column property="period"/>
+                <column property="category"/>
+                <column property="quantity"/>
+                <column property="applicant"/>
+                <column property="approved"/>
+            </columns>
+        </dataGrid>
+        <hbox id="buttonPanel" classNames="buttons-panel">
+            <button id="createBtn" action="createAction" text="Создать"/>
+            <button id="generateTotalBtn" action="generateTotalAction" text="Сгенерировать итог"/>
+            <button id="approveBtn" action="approveAction" text="Утвердить"/>
+            <button id="exportBtn" action="exportAction" text="Экспорт"/>
         </hbox>
     </layout>
 </view>
