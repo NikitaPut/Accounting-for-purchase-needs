@@ -6,13 +6,19 @@ import com.company.jmix.entity.NeedCategory;
 import com.company.jmix.service.NeedCalculationService;
 import com.company.jmix.view.main.MainView;
 import com.company.jmix.view.needdetail.NeedDetailView;
+<<<<<<< HEAD
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.button.Button;
+=======
+>>>>>>> 59c5684a9f8e20cd85a76c94f451d5f52e5a3e6e
 import com.vaadin.flow.router.Route;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
 import io.jmix.core.Messages;
+<<<<<<< HEAD
 import io.jmix.flowui.DialogWindows;
+=======
+>>>>>>> 59c5684a9f8e20cd85a76c94f451d5f52e5a3e6e
 import io.jmix.flowui.Notifications;
 import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.component.combobox.JmixComboBox;
@@ -49,7 +55,11 @@ public class NeedListView extends StandardListView<Need> {
     @Autowired
     private Messages messages;
     @Autowired
+<<<<<<< HEAD
     private DialogWindows dialogWindows;
+=======
+    private DialogWindow dialogWindowManager;
+>>>>>>> 59c5684a9f8e20cd85a76c94f451d5f52e5a3e6e
 
     @Subscribe
     public void onInit(InitEvent event) {
@@ -57,6 +67,7 @@ public class NeedListView extends StandardListView<Need> {
         needsDl.load();
     }
 
+<<<<<<< HEAD
     @Subscribe("createBtn") // ID кнопки создания из XML
     public void onCreateBtnClick(ClickEvent<Button> event) {
         // Создаем новую сущность
@@ -75,6 +86,8 @@ public class NeedListView extends StandardListView<Need> {
     }
 
 
+=======
+>>>>>>> 59c5684a9f8e20cd85a76c94f451d5f52e5a3e6e
     @Subscribe("generateTotalAction")
     public void onGenerateTotal(ActionPerformedEvent event) {
         Need selected = needsDataGrid.getSingleSelectedItem();
