@@ -26,12 +26,16 @@ public class TestDataInitializerService {
                 period.setIsOpen(true);
                 NeedPeriod savedPeriod = dataManager.save(period);
 
-                NeedCategory category = dataManager.create(NeedCategory.class);
-                category.setName("Тестовая категория");
-                NeedCategory savedCategory = dataManager.save(category);
+                NeedCategory category1 = dataManager.create(NeedCategory.class);
+                category1.setName("Категория 1");
+                NeedCategory savedCategory1 = dataManager.save(category1);
 
-                createTestNeed(savedPeriod, savedCategory, 10, "Тестовая потребность 1");
-                createTestNeed(savedPeriod, savedCategory, 5, "Тестовая потребность 2");
+                NeedCategory category2 = dataManager.create(NeedCategory.class);
+                category2.setName("Категория 2");
+                NeedCategory savedCategory2 = dataManager.save(category2);
+
+                createTestNeed(savedPeriod, category1, 10, "Тестовая потребность 1");
+                createTestNeed(savedPeriod, category2, 5, "Тестовая потребность 2");
             }
             return null;
         });
