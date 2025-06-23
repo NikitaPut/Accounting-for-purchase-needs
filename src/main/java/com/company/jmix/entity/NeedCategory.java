@@ -2,6 +2,7 @@ package com.company.jmix.entity;
 
 import io.jmix.core.metamodel.annotation.InstanceName;
 import io.jmix.core.metamodel.annotation.JmixEntity;
+import io.jmix.core.metamodel.annotation.JmixProperty;
 import jakarta.persistence.*;
 
 @JmixEntity
@@ -24,6 +25,9 @@ public class NeedCategory {
 
     @Column(name = "UNIT")
     private String unit;
+
+    @Column(name = "IS_DEFAULT")
+    private Boolean isDefault = false;
 
     // Геттеры и сеттеры
     public Long getId() {
@@ -56,5 +60,15 @@ public class NeedCategory {
 
     public void setUnit(String unit) {
         this.unit = unit;
+    }
+
+    @JmixProperty
+    public Boolean isDefault() {
+        return isDefault;
+    }
+
+    @JmixProperty
+    public void setDefault(Boolean isDefault) {
+        this.isDefault = isDefault;
     }
 }

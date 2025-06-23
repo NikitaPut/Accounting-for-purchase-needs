@@ -3,11 +3,14 @@ package com.company.jmix.service;
 import com.company.jmix.entity.*;
 import io.jmix.core.DataManager;
 import io.jmix.core.security.SystemAuthenticator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TestDataInitializerService {
+
+    @Autowired
     private final DataManager dataManager;
     private final SystemAuthenticator systemAuthenticator;
 
@@ -57,5 +60,17 @@ public class TestDataInitializerService {
         need.setJustification(justification);
         need.setApplicant("Тестовый пользователь");
         dataManager.save(need);
+    }
+
+    public NeedCategory getDefaultCategory() {
+        return dataManager.load(NeedCategory.class)
+                .query("select c from NeedCategory c where c.isDefault = true")
+                .optional()
+                .orElseGet(() -> {
+                    NeedCategory category = dataManager.create(NeedCategory.class);
+                    category.setName("Основная категория");
+                    category.setDefault(true);
+                    return dataManager.save(category);
+                });
     }
 }

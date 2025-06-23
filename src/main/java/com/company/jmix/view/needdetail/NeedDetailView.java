@@ -3,10 +3,12 @@ package com.company.jmix.view.needdetail;
 import com.company.jmix.entity.Need;
 import com.company.jmix.entity.NeedPeriod;
 import com.company.jmix.entity.NeedCategory;
+import com.company.jmix.service.TestDataInitializerService;
 import com.company.jmix.view.main.MainView;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
+import io.jmix.core.entity.EntityValues;
 import io.jmix.flowui.component.combobox.JmixComboBox;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.model.InstanceContainer;
@@ -40,12 +42,21 @@ public class NeedDetailView extends StandardDetailView<Need> {
     @Autowired
     private DataManager dataManager;
 
+    @Autowired
+    private TestDataInitializerService testDataService;
+
     @Subscribe
     public void onInit(InitEvent event) {
         periodField.setItems();
         categoryField.setItems();
         loadPeriods();
         loadCategories();
+
+        // Загрузка категорий
+        List<NeedCategory> categories = dataManager.load(NeedCategory.class)
+                .query("select c from NeedCategory c order by c.name")
+                .list();
+        categoriesDc.setItems(categories);
     }
 
     private void loadPeriods() {
@@ -58,20 +69,62 @@ public class NeedDetailView extends StandardDetailView<Need> {
     }
 
     private void loadCategories() {
-        categoriesDc.setItems(dataManager.load(NeedCategory.class)
+        // Загрузка категорий
+        List<NeedCategory> categories = dataManager.load(NeedCategory.class)
                 .query("select c from NeedCategory c order by c.name")
-                .fetchPlan(FetchPlan.INSTANCE_NAME)
-                .list());
+                .list();
+        System.out.println("Loaded categories: " + categories.size());
+        categoriesDc.setItems(categories);
     }
+
+    /*@Subscribe
+    public void onBeforeShow(BeforeShowEvent event) {
+        Need need = getEditedEntity();
+        if (need.getId() == null) {
+            initializeNewNeed(need);
+            // Устанавливаем категорию по умолчанию
+            NeedCategory defaultCategory = dataManager.load(NeedCategory.class)
+                    .query("select c from NeedCategory c where c.isDefault = true")
+                    .one();
+            EntityValues.setValue(defaultCategory, "+truckLoadCapacity", defaultCategory);
+            need.setCategory(defaultCategory);
+        }
+
+        // Дополнительная проверка (на случай если загрузка в onInit не сработала)
+        if (periodsDc.getItems().isEmpty()) {
+            loadPeriods();
+        }
+        if (categoriesDc.getItems().isEmpty()) {
+            loadCategories();
+        }
+    }*/
 
     @Subscribe
     public void onBeforeShow(BeforeShowEvent event) {
         Need need = getEditedEntity();
         if (need.getId() == null) {
             initializeNewNeed(need);
+            // Try to load default category
+            Optional<NeedCategory> defaultCategory = dataManager.load(NeedCategory.class)
+                    .query("select c from NeedCategory c where c.isDefault = true")
+                    .optional();
+            if (defaultCategory.isPresent()) {
+                need.setCategory(defaultCategory.get());
+            } else {
+                // Fallback: Load first available category or handle absence
+                List<NeedCategory> categories = dataManager.load(NeedCategory.class)
+                        .query("select c from NeedCategory c order by c.name")
+                        .list();
+                if (!categories.isEmpty()) {
+                    need.setCategory(categories.get(0)); // Set first category as fallback
+                } else {
+                    // Log warning or notify user that no categories exist
+                    System.out.println("No categories available to set as default.");
+                }
+            }
         }
 
-        // Дополнительная проверка (на случай если загрузка в onInit не сработала)
+        // Ensure periods and categories are loaded
         if (periodsDc.getItems().isEmpty()) {
             loadPeriods();
         }
