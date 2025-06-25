@@ -16,31 +16,29 @@ import java.util.Optional;
 public class NeedCalculationService {
 
     public static class CalculationResult {
-        private String added;
-        private int removed;
-        private int updated;
+        private final int added;
+        private final int removed;
+        private final int updated;
 
         public CalculationResult(int added, int removed, int updated) {
-            this.added = String.valueOf(added);
+            this.added = added;
             this.removed = removed;
             this.updated = updated;
         }
 
-        // Геттеры
-        public String getAdded() { return added; }
+        public int getAdded() { return added; }
         public int getRemoved() { return removed; }
         public int getUpdated() { return updated; }
-
-        @Override
-        public String toString() {
-            return String.format("Added: %d, Removed: %d, Updated: %d", added, removed, updated);
-        }
     }
 
     @Autowired
     private DataManager dataManager;
 
     public CalculationResult calculateTotalNeeds(NeedPeriod period) {
+        if (period == null) {
+            throw new IllegalArgumentException("Period cannot be null");
+        }
+
         int added = 0;
         int removed = 0;
         int updated = 0;
@@ -51,37 +49,45 @@ public class NeedCalculationService {
                 .parameter("period", period)
                 .list();
 
-        // 2. Получаем все обычные потребности для периода
+        // 2. Получаем все обычные потребности для периода (только утвержденные)
         List<Need> regularNeeds = dataManager.load(Need.class)
                 .query("SELECT n FROM Need n WHERE n.period = :period AND n.isTotal = false AND n.approved = true")
                 .parameter("period", period)
                 .list();
 
-        // 3. Группируем обычные потребности по категориям
+        // 3. Группируем обычные потребности по категориям (игнорируя нулевые категории)
         Map<NeedCategory, Integer> categorySums = new HashMap<>();
         for (Need regularNeed : regularNeeds) {
-            categorySums.merge(regularNeed.getCategory(), regularNeed.getQuantity(), Integer::sum);
+            if (regularNeed != null && regularNeed.getCategory() != null && regularNeed.getQuantity() != null) {
+                categorySums.merge(
+                        regularNeed.getCategory(),
+                        regularNeed.getQuantity(),
+                        Integer::sum
+                );
+            }
         }
 
         // 4. Обновляем или создаем итоговые потребности
         for (Map.Entry<NeedCategory, Integer> entry : categorySums.entrySet()) {
             NeedCategory category = entry.getKey();
-            int totalQuantity = entry.getValue();
+            Integer totalQuantity = entry.getValue();
+
+            if (category == null || totalQuantity == null) {
+                continue;
+            }
 
             Optional<Need> existingTotal = existingTotals.stream()
-                    .filter(n -> n.getCategory().equals(category))
+                    .filter(n -> n != null && n.getCategory() != null && n.getCategory().equals(category))
                     .findFirst();
 
             if (existingTotal.isPresent()) {
-                // Обновляем существующую итоговую потребность
                 Need total = existingTotal.get();
-                if (!total.getQuantity().equals(totalQuantity)) {
+                if (!totalQuantity.equals(total.getQuantity())) {
                     total.setQuantity(totalQuantity);
                     dataManager.save(total);
                     updated++;
                 }
             } else {
-                // Создаем новую итоговую потребность
                 Need newTotal = dataManager.create(Need.class);
                 newTotal.setPeriod(period);
                 newTotal.setCategory(category);
@@ -95,7 +101,7 @@ public class NeedCalculationService {
 
         // 5. Удаляем устаревшие итоговые потребности
         for (Need total : existingTotals) {
-            if (!categorySums.containsKey(total.getCategory())) {
+            if (total != null && total.getCategory() != null && !categorySums.containsKey(total.getCategory())) {
                 dataManager.remove(total);
                 removed++;
             }

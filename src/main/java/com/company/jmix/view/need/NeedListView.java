@@ -113,22 +113,27 @@ public class NeedListView extends StandardListView<Need> {
         }
 
         NeedPeriod period = selected.getPeriod();
-        if (!period.getIsOpen()) {
+        if (period == null || !period.getIsOpen()) {
             notifications.show(messages.getMessage("need.periodClosed"));
             return;
         }
 
-        NeedCalculationService.CalculationResult result = needCalculationService.calculateTotalNeeds(period);
+        try {
+            NeedCalculationService.CalculationResult result = needCalculationService.calculateTotalNeeds(period);
 
-        String message = messages.formatMessage(
-                "Добавлено: {0}, Удалено: {1}, Обновлено: {2}",
-                result.getAdded(),
-                result.getRemoved(),
-                result.getUpdated()
-        );
+            String message = messages.formatMessage(
+                    "Добавлено: {0}, Удалено: {1}, Обновлено: {2}",
+                    result.getAdded(),
+                    result.getRemoved(),
+                    result.getUpdated()
+            );
 
-        notifications.show(message);
-        needsDl.load();
+            notifications.show(message);
+        } catch (Exception e) {
+            notifications.show("Ошибка при расчете итогов: " + e.getMessage());
+        } finally {
+            needsDl.load();
+        }
     }
 
     @Subscribe("approveAction")
