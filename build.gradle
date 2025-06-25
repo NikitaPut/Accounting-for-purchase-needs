@@ -23,6 +23,7 @@ repositories {
 }
 
 dependencies {
+    // implementation 'io.jmix.pivottable:jmix-pivottable-flowui-starter'
     implementation 'io.jmix.security:jmix-security'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter'

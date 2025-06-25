@@ -6,18 +6,21 @@ import com.company.jmix.entity.NeedCategory;
 import com.company.jmix.service.NeedCalculationService;
 import com.company.jmix.view.main.MainView;
 import com.company.jmix.view.needdetail.NeedDetailView;
+import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
 import io.jmix.core.Messages;
 import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.Notifications;
-// import io.jmix.flowui.component.excelexporter.ExcelExporter;
 import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.kit.action.ActionPerformedEvent;
+import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.model.CollectionLoader;
 import io.jmix.flowui.view.*;
+// import io.jmix.pivottableflowui.component.PivotTable;
+// import org.docx4j.openpackaging.parts.SpreadsheetML.PivotTable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
@@ -27,6 +30,7 @@ import java.util.Optional;
 @ViewController("Need.browse")
 @ViewDescriptor("need-list-view.xml")
 @Route(value = "need-list", layout = MainView.class)
+@DialogMode(width = "50em", height = "37.5em", resizable = true)
 public class NeedListView extends StandardListView<Need> {
 
     @ViewComponent
@@ -37,6 +41,10 @@ public class NeedListView extends StandardListView<Need> {
 
     @ViewComponent
     private CollectionContainer<Need> needsDc;
+
+    @ViewComponent
+    // private PivotTable pivotTable;
+    // private PivotTableExporter pivotTableExport;
 
     @Autowired
     private DataManager dataManager;
@@ -54,6 +62,11 @@ public class NeedListView extends StandardListView<Need> {
     @Subscribe
     public void onInit(InitEvent event) {
         needsDl.load();
+//        PivotTableExporterExcele exporter = getApplicationContext()
+//                .getBean(String.valueOf(PivotTableExcelExporter.class));
+//        pivotTableExport = getApplicationContext()
+//                .getBean(PivotTableExporter.class, pivotTable, pivotTableExport);
+
     }
 
     @Subscribe("createAction")
@@ -131,19 +144,18 @@ public class NeedListView extends StandardListView<Need> {
     @Subscribe("exportAction")
     public void onExportAction(ActionPerformedEvent event) {
         if (needsDc.getItems().isEmpty()) {
-            notifications.show(messages.getMessage("need.noData"));
+            notifications.create("Нет данных для экспорта").show();
             return;
         }
 
         try {
-//            ExcelExporter excelExporter = applicationContext.getBean(ExcelExporter.class);
-//            excelExporter.setFileName("Needs_" + LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm")) + ".xlsx");
-//            excelExporter.exportDataGrid(needsDataGrid);
-            notifications.show(messages.getMessage("need.exportSuccess"));
+            // pivotTableExport.exportTableToXls();
+            notifications.create("Экспорт завершён успешно").show();
         } catch (Exception e) {
-            notifications.show(messages.formatMessage("need.exportError", e.getMessage()));
+            notifications.create("Ошибка при экспорте: " + e.getMessage()).show();
         }
     }
+
 
     private boolean hasTotalForPeriod(NeedPeriod period) {
         Long count = dataManager.loadValue(
