@@ -12,7 +12,7 @@
         <action id="createAction" type="list_create" text="Создать"/>
         <action id="generateTotalAction" text="Сгенерировать итог"/>
         <action id="approveAction" text="Утвердить"/>
-        <action id="exportAction" text="Экспорт"/>
+        <action id="excelExport" type="grdexp_excelExport" text="Экспорт"/>
     </actions>
     <layout>
         <dataGrid id="needsDataGrid" dataContainer="needsDc">
@@ -32,7 +32,7 @@
             <button id="createBtn" action="createAction" text="Создать"/>
             <button id="generateTotalBtn" action="generateTotalAction" text="Сгенерировать итог"/>
             <button id="approveBtn" action="approveAction" text="Утвердить"/>
-            <button id="exportBtn" action="exportAction" text="Экспорт"/>
+            <button id="exportBtn" action="excelExport" text="Экспорт"/>
         </hbox>
     </layout>
 </view>

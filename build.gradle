@@ -23,7 +23,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.jmix.security:jmix-security'
+    implementation 'io.jmix.gridexport:jmix-gridexport-flowui-starter'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'io.jmix.reports:jmix-reports-flowui'

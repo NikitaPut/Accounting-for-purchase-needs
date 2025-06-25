@@ -13,15 +13,14 @@ import io.jmix.core.FetchPlan;
 import io.jmix.core.Messages;
 import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.Notifications;
-// import io.jmix.flowui.component.excelexporter.ExcelExporter;
 import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.kit.action.ActionPerformedEvent;
 import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.model.CollectionLoader;
 import io.jmix.flowui.view.*;
+import io.jmix.gridexportflowui.action.ExcelExportAction;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -43,6 +42,9 @@ public class NeedListView extends StandardListView<Need> {
     @ViewComponent
     private JmixButton approveBtn;
 
+    @ViewComponent("needsDataGrid.excelExport")
+    private ExcelExportAction excelExportAction; // Injected action
+
     @Autowired
     private DataManager dataManager;
     @Autowired
@@ -53,8 +55,17 @@ public class NeedListView extends StandardListView<Need> {
     private Messages messages;
     @Autowired
     private DialogWindows dialogWindows;
-    @Autowired
-    private ApplicationContext applicationContext;
+
+    @Subscribe
+    public void onInit(InitEvent event) {
+        needsDl.load();
+        updateApproveButtonText();
+        if (needsDataGrid != null && excelExportAction != null) {
+            excelExportAction.setText("Экспорт в Excel");
+        } else {
+            notifications.show("Ошибка инициализации экспорта!");
+        }
+    }
 
     @Subscribe(id = "needsDataGrid", subject = "selectionListener")
     public void onSelectionChange(SelectionEvent<DataGrid<Need>, Need> event) {
@@ -69,12 +80,6 @@ public class NeedListView extends StandardListView<Need> {
         }
         approveBtn.setEnabled(true);
         approveBtn.setText(selected.getApproved() ? "Разутвердить" : "Утвердить");
-    }
-
-    @Subscribe
-    public void onInit(InitEvent event) {
-        needsDl.load();
-        updateApproveButtonText();
     }
 
     @Subscribe("createAction")
@@ -148,12 +153,10 @@ public class NeedListView extends StandardListView<Need> {
         selected.setApproved(!wasApproved);
 
         if (selected.getApproved()) {
-            // Логика при утверждении
             if (selected.getPeriod().getIsOpen() && hasTotalForPeriod(selected.getPeriod())) {
                 notifications.show(messages.getMessage("need.notAccounted"));
             }
         } else {
-            // Логика при разутверждении
             if (selected.getPeriod().getIsOpen() && hasTotalForPeriod(selected.getPeriod())) {
                 notifications.show(messages.getMessage("need.recalculateTotal"));
             }
@@ -162,23 +165,6 @@ public class NeedListView extends StandardListView<Need> {
         dataManager.save(selected);
         needsDl.load();
         updateApproveButtonText();
-    }
-
-    @Subscribe("exportAction")
-    public void onExportAction(ActionPerformedEvent event) {
-        if (needsDc.getItems().isEmpty()) {
-            notifications.show(messages.getMessage("need.noData"));
-            return;
-        }
-
-        try {
-//            ExcelExporter excelExporter = applicationContext.getBean(ExcelExporter.class);
-//            excelExporter.setFileName("Needs_" + LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm")) + ".xlsx");
-//            excelExporter.exportDataGrid(needsDataGrid);
-            notifications.show(messages.getMessage("need.exportSuccess"));
-        } catch (Exception e) {
-            notifications.show(messages.formatMessage("need.exportError", e.getMessage()));
-        }
     }
 
     private boolean hasTotalForPeriod(NeedPeriod period) {

@@ -77,28 +77,6 @@ public class NeedDetailView extends StandardDetailView<Need> {
         categoriesDc.setItems(categories);
     }
 
-    /*@Subscribe
-    public void onBeforeShow(BeforeShowEvent event) {
-        Need need = getEditedEntity();
-        if (need.getId() == null) {
-            initializeNewNeed(need);
-            // Устанавливаем категорию по умолчанию
-            NeedCategory defaultCategory = dataManager.load(NeedCategory.class)
-                    .query("select c from NeedCategory c where c.isDefault = true")
-                    .one();
-            EntityValues.setValue(defaultCategory, "+truckLoadCapacity", defaultCategory);
-            need.setCategory(defaultCategory);
-        }
-
-        // Дополнительная проверка (на случай если загрузка в onInit не сработала)
-        if (periodsDc.getItems().isEmpty()) {
-            loadPeriods();
-        }
-        if (categoriesDc.getItems().isEmpty()) {
-            loadCategories();
-        }
-    }*/
-
     @Subscribe
     public void onBeforeShow(BeforeShowEvent event) {
         Need need = getEditedEntity();
