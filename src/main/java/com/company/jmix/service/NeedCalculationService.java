@@ -16,19 +16,19 @@ import java.util.Optional;
 public class NeedCalculationService {
 
     public static class CalculationResult {
-        private final int added;
-        private final int removed;
-        private final int updated;
+        private final String added;
+        private final String removed;
+        private final String updated;
 
         public CalculationResult(int added, int removed, int updated) {
-            this.added = added;
-            this.removed = removed;
-            this.updated = updated;
+            this.added = String.valueOf(added);
+            this.removed = String.valueOf(removed);
+            this.updated = String.valueOf(updated);
         }
 
-        public int getAdded() { return added; }
-        public int getRemoved() { return removed; }
-        public int getUpdated() { return updated; }
+        public String getAdded() { return added; }
+        public String getRemoved() { return removed; }
+        public String getUpdated() { return updated; }
     }
 
     @Autowired
