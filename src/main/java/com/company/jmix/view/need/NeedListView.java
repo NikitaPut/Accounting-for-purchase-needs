@@ -44,7 +44,7 @@ public class NeedListView extends StandardListView<Need> {
     private JmixButton approveBtn;
 
     @ViewComponent("needsDataGrid.excelExport")
-    private ExcelExportAction excelExportAction; // Injected action
+    private ExcelExportAction excelExportAction;
 
     @Autowired
     private DataManager dataManager;
@@ -167,22 +167,6 @@ public class NeedListView extends StandardListView<Need> {
         needsDl.load();
         updateApproveButtonText();
     }
-
-    @Subscribe("exportAction")
-    public void onExportAction(ActionPerformedEvent event) {
-        if (needsDc.getItems().isEmpty()) {
-            notifications.create("Нет данных для экспорта").show();
-            return;
-        }
-
-        try {
-            // pivotTableExport.exportTableToXls();
-            notifications.create("Экспорт завершён успешно").show();
-        } catch (Exception e) {
-            notifications.create("Ошибка при экспорте: " + e.getMessage()).show();
-        }
-    }
-
 
     private boolean hasTotalForPeriod(NeedPeriod period) {
         Long count = dataManager.loadValue(

@@ -4,10 +4,7 @@
       focusComponent="needsDataGrid">
     <data>
         <collection id="needsDc" class="com.company.jmix.entity.Need">
-            <fetchPlan extends="_base">
-                <property name="period" fetchPlan="_base"/>
-                <property name="category" fetchPlan="_base"/>
-            </fetchPlan>
+            <fetchPlan extends="_base"/>
             <loader id="needsDl"/>
         </collection>
     </data>
@@ -31,18 +28,6 @@
                 <column property="approved"/>
             </columns>
         </dataGrid>
-<!--        <pivotTable id="pivotTable"
-                    width="100%"
-                    height="300px"
-                    dataContainer="needsDc"
-                    visible="false">
-            <properties>
-                <property name="rows" value="period,category"/>
-                <property name="cols" value="approved"/>
-                <property name="aggregatorName" value="Count"/>
-                <property name="rendererName" value="Table"/>
-            </properties>
-        </pivotTable>-->
         <hbox id="buttonPanel" classNames="buttons-panel">
             <button id="createBtn" action="createAction" text="Создать"/>
             <button id="generateTotalBtn" action="generateTotalAction" text="Сгенерировать итог"/>
