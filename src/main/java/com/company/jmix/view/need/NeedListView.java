@@ -6,6 +6,7 @@ import com.company.jmix.entity.NeedCategory;
 import com.company.jmix.service.NeedCalculationService;
 import com.company.jmix.view.main.MainView;
 import com.company.jmix.view.needdetail.NeedDetailView;
+import com.vaadin.flow.data.selection.SelectionEvent;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
@@ -15,6 +16,7 @@ import io.jmix.flowui.Notifications;
 // import io.jmix.flowui.component.excelexporter.ExcelExporter;
 import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.kit.action.ActionPerformedEvent;
+import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.model.CollectionLoader;
 import io.jmix.flowui.view.*;
@@ -38,6 +40,9 @@ public class NeedListView extends StandardListView<Need> {
     @ViewComponent
     private CollectionContainer<Need> needsDc;
 
+    @ViewComponent
+    private JmixButton approveBtn;
+
     @Autowired
     private DataManager dataManager;
     @Autowired
@@ -51,9 +56,25 @@ public class NeedListView extends StandardListView<Need> {
     @Autowired
     private ApplicationContext applicationContext;
 
+    @Subscribe(id = "needsDataGrid", subject = "selectionListener")
+    public void onSelectionChange(SelectionEvent<DataGrid<Need>, Need> event) {
+        updateApproveButtonText();
+    }
+
+    private void updateApproveButtonText() {
+        Need selected = needsDataGrid.getSingleSelectedItem();
+        if (selected == null || !selected.getPeriod().getIsOpen()) {
+            approveBtn.setEnabled(false);
+            return;
+        }
+        approveBtn.setEnabled(true);
+        approveBtn.setText(selected.getApproved() ? "Разутвердить" : "Утвердить");
+    }
+
     @Subscribe
     public void onInit(InitEvent event) {
         needsDl.load();
+        updateApproveButtonText();
     }
 
     @Subscribe("createAction")
@@ -111,21 +132,31 @@ public class NeedListView extends StandardListView<Need> {
     }
 
     @Subscribe("approveAction")
-    public void onApprove(ActionPerformedEvent event) {
+    public void onApproveAction(ActionPerformedEvent event) {
         Need selected = needsDataGrid.getSingleSelectedItem();
         if (selected == null) {
             notifications.show(messages.getMessage("need.select"));
             return;
         }
 
-        selected.setApproved(!selected.getApproved());
+        boolean wasApproved = selected.getApproved();
+        selected.setApproved(!wasApproved);
 
-        if (selected.getApproved() && selected.getPeriod().getIsOpen() && hasTotalForPeriod(selected.getPeriod())) {
-            notifications.show(messages.getMessage("need.notAccounted"));
+        if (selected.getApproved()) {
+            // Логика при утверждении
+            if (selected.getPeriod().getIsOpen() && hasTotalForPeriod(selected.getPeriod())) {
+                notifications.show(messages.getMessage("need.notAccounted"));
+            }
+        } else {
+            // Логика при разутверждении
+            if (selected.getPeriod().getIsOpen() && hasTotalForPeriod(selected.getPeriod())) {
+                notifications.show(messages.getMessage("need.recalculateTotal"));
+            }
         }
 
         dataManager.save(selected);
         needsDl.load();
+        updateApproveButtonText();
     }
 
     @Subscribe("exportAction")
