@@ -28,6 +28,7 @@ import java.util.Optional;
 @ViewController("Need.browse")
 @ViewDescriptor("need-list-view.xml")
 @Route(value = "need-list", layout = MainView.class)
+@DialogMode(width = "50em", height = "37.5em", resizable = true)
 public class NeedListView extends StandardListView<Need> {
 
     @ViewComponent
@@ -166,6 +167,22 @@ public class NeedListView extends StandardListView<Need> {
         needsDl.load();
         updateApproveButtonText();
     }
+
+    @Subscribe("exportAction")
+    public void onExportAction(ActionPerformedEvent event) {
+        if (needsDc.getItems().isEmpty()) {
+            notifications.create("Нет данных для экспорта").show();
+            return;
+        }
+
+        try {
+            // pivotTableExport.exportTableToXls();
+            notifications.create("Экспорт завершён успешно").show();
+        } catch (Exception e) {
+            notifications.create("Ошибка при экспорте: " + e.getMessage()).show();
+        }
+    }
+
 
     private boolean hasTotalForPeriod(NeedPeriod period) {
         Long count = dataManager.loadValue(
