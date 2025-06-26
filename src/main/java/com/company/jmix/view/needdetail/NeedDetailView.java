@@ -5,13 +5,16 @@ import com.company.jmix.entity.NeedPeriod;
 import com.company.jmix.entity.NeedCategory;
 import com.company.jmix.service.TestDataInitializerService;
 import com.company.jmix.view.main.MainView;
+import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
 import io.jmix.core.entity.EntityValues;
 import io.jmix.flowui.component.combobox.JmixComboBox;
+import io.jmix.flowui.kit.action.ActionPerformedEvent;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.model.InstanceContainer;
+import io.jmix.flowui.model.InstanceLoader;
 import io.jmix.flowui.view.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -27,6 +30,8 @@ public class NeedDetailView extends StandardDetailView<Need> {
     @ViewComponent
     private InstanceContainer<Need> needDc;
 
+    private InstanceLoader<Need> needDl;
+
     @ViewComponent
     private CollectionContainer<NeedPeriod> periodsDc;
 
@@ -34,10 +39,10 @@ public class NeedDetailView extends StandardDetailView<Need> {
     private CollectionContainer<NeedCategory> categoriesDc;
 
     @ViewComponent
-    private JmixComboBox<Integer> periodField;
+    private JmixComboBox<NeedPeriod> periodField;
 
     @ViewComponent
-    private JmixComboBox<Integer> categoryField;
+    private JmixComboBox<NeedCategory> categoryField;
 
     @Autowired
     private DataManager dataManager;
@@ -47,29 +52,24 @@ public class NeedDetailView extends StandardDetailView<Need> {
 
     @Subscribe
     public void onInit(InitEvent event) {
-        periodField.setItems();
-        categoryField.setItems();
         loadPeriods();
         loadCategories();
 
-        // Загрузка категорий
-        List<NeedCategory> categories = dataManager.load(NeedCategory.class)
-                .query("select c from NeedCategory c order by c.name")
-                .list();
-        categoriesDc.setItems(categories);
+        // Set items for combo boxes (safe to do in onInit as it doesn't depend on edited entity)
+        periodField.setItems(periodsDc.getItems());
+        categoryField.setItems(categoriesDc.getItems());
     }
 
     private void loadPeriods() {
         List<NeedPeriod> periods = dataManager.load(NeedPeriod.class)
-                        .query("select p from NeedPeriod p order by p.id desc")
-                        .fetchPlan(FetchPlan.INSTANCE_NAME)
-                        .list();
+                .query("select p from NeedPeriod p order by p.id desc")
+                .fetchPlan(FetchPlan.INSTANCE_NAME)
+                .list();
         System.out.println("Loaded periods: " + periods.size());
         periodsDc.setItems(periods);
     }
 
     private void loadCategories() {
-        // Загрузка категорий
         List<NeedCategory> categories = dataManager.load(NeedCategory.class)
                 .query("select c from NeedCategory c order by c.name")
                 .list();
@@ -79,35 +79,29 @@ public class NeedDetailView extends StandardDetailView<Need> {
 
     @Subscribe
     public void onBeforeShow(BeforeShowEvent event) {
+// Убедитесь, что загрузчик инициализирован перед загрузкой данных
         Need need = getEditedEntity();
-        if (need.getId() == null) {
+        if (need.getId() != null) {
+            needDl.setEntityId(need.getId());
+            needDl.load();
+        }        if (need.getId() == null) {
             initializeNewNeed(need);
-            // Try to load default category
-            Optional<NeedCategory> defaultCategory = dataManager.load(NeedCategory.class)
-                    .query("select c from NeedCategory c where c.isDefault = true")
-                    .optional();
-            if (defaultCategory.isPresent()) {
-                need.setCategory(defaultCategory.get());
-            } else {
-                // Fallback: Load first available category or handle absence
-                List<NeedCategory> categories = dataManager.load(NeedCategory.class)
-                        .query("select c from NeedCategory c order by c.name")
-                        .list();
-                if (!categories.isEmpty()) {
-                    need.setCategory(categories.get(0)); // Set first category as fallback
-                } else {
-                    // Log warning or notify user that no categories exist
-                    System.out.println("No categories available to set as default.");
-                }
+            setLatestPeriod(need);
+            // Preselect default category if not set
+            if (need.getCategory() == null) {
+                NeedCategory defaultCategory = testDataService.getDefaultCategory();
+                need.setCategory(defaultCategory);
             }
         }
 
-        // Ensure periods and categories are loaded
+        // Ensure combo boxes are populated
         if (periodsDc.getItems().isEmpty()) {
             loadPeriods();
+            periodField.setItems(periodsDc.getItems());
         }
         if (categoriesDc.getItems().isEmpty()) {
             loadCategories();
+            categoryField.setItems(categoriesDc.getItems());
         }
     }
 
@@ -137,5 +131,21 @@ public class NeedDetailView extends StandardDetailView<Need> {
         if (need.getCategory() == null) {
             event.getErrors().add("Категория должна быть указана");
         }
+    }
+
+//    @Subscribe("saveAction")
+//    public void onSaveAction(ActionPerformedEvent event) {
+//        try {
+//            if (saveChanges()) {  // Нужно исправить saveChanges
+//                close(StandardOutcome.SAVE);
+//            }
+//        } catch (ValidationException e) {
+//            // Ошибки уже показаны пользователю
+//        }
+//    }
+
+    @Subscribe("closeAction")
+    public void onCloseAction(ActionPerformedEvent event) {
+        close(StandardOutcome.CLOSE);
     }
 }

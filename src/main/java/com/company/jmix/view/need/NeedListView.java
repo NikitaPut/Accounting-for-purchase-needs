@@ -110,6 +110,31 @@ public class NeedListView extends StandardListView<Need> {
                 });
     }
 
+    @Subscribe("needsDataGrid.edit")
+    public void onEditAction(ActionPerformedEvent event) {
+        Need selected = needsDataGrid.getSingleSelectedItem();
+        if (selected == null) {
+            notifications.show(messages.getMessage("need.select"));
+            return;
+        }
+
+        if (selected.getApproved()) {
+            notifications.show(messages.getMessage("need.cannotEditApproved"));
+            return;
+        }
+
+        dialogWindows.detail(this, Need.class)
+                .editEntity(selected)
+                .withViewClass(NeedDetailView.class)
+                .open()
+                .addAfterCloseListener(afterCloseEvent -> {
+                    if (afterCloseEvent.closedWith(StandardOutcome.SAVE)) {
+                        needsDl.load();
+                        notifications.show(messages.getMessage("need.updated"));
+                    }
+                });
+    }
+
     @Subscribe("generateTotalAction")
     public void onGenerateTotal(ActionPerformedEvent event) {
         Need selected = needsDataGrid.getSingleSelectedItem();

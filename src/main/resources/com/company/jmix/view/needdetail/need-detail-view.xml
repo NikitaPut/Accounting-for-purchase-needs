@@ -8,6 +8,11 @@
                 <property name="period" fetchPlan="_instance_name"/>
                 <property name="category" fetchPlan="_instance_name"/>
             </fetchPlan>
+        <loader id="needDl">
+            <query>
+                <![CDATA[select e from Need e where e.id = :id]]>
+            </query>
+        </loader>
         </instance>
         <collection id="periodsDc" class="com.company.jmix.entity.NeedPeriod"/>
         <collection id="categoriesDc" class="com.company.jmix.entity.NeedCategory"/>
@@ -21,13 +26,11 @@
             <comboBox id="periodField" property="period"
                       dataContainer="needDc"
                       label="Период"
-                      required="true"
-            />
+                      required="true"/>
             <comboBox id="categoryField" property="category"
                       dataContainer="needDc"
                       label="Категория"
-                      required="true"
-            />
+                      required="true"/>
             <integerField id="quantityField" property="quantity"
                           label="Количество"
                           required="true"/>
