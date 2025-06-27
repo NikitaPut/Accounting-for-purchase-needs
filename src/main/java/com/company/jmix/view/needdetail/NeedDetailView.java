@@ -5,12 +5,11 @@ import com.company.jmix.entity.NeedPeriod;
 import com.company.jmix.entity.NeedCategory;
 import com.company.jmix.service.TestDataInitializerService;
 import com.company.jmix.view.main.MainView;
-import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
-import io.jmix.core.entity.EntityValues;
 import io.jmix.flowui.component.combobox.JmixComboBox;
+import io.jmix.flowui.component.validation.ValidationErrors;
 import io.jmix.flowui.kit.action.ActionPerformedEvent;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.model.InstanceContainer;
@@ -30,6 +29,7 @@ public class NeedDetailView extends StandardDetailView<Need> {
     @ViewComponent
     private InstanceContainer<Need> needDc;
 
+    @ViewComponent
     private InstanceLoader<Need> needDl;
 
     @ViewComponent
@@ -54,8 +54,6 @@ public class NeedDetailView extends StandardDetailView<Need> {
     public void onInit(InitEvent event) {
         loadPeriods();
         loadCategories();
-
-        // Set items for combo boxes (safe to do in onInit as it doesn't depend on edited entity)
         periodField.setItems(periodsDc.getItems());
         categoryField.setItems(categoriesDc.getItems());
     }
@@ -65,7 +63,6 @@ public class NeedDetailView extends StandardDetailView<Need> {
                 .query("select p from NeedPeriod p order by p.id desc")
                 .fetchPlan(FetchPlan.INSTANCE_NAME)
                 .list();
-        System.out.println("Loaded periods: " + periods.size());
         periodsDc.setItems(periods);
     }
 
@@ -73,28 +70,25 @@ public class NeedDetailView extends StandardDetailView<Need> {
         List<NeedCategory> categories = dataManager.load(NeedCategory.class)
                 .query("select c from NeedCategory c order by c.name")
                 .list();
-        System.out.println("Loaded categories: " + categories.size());
         categoriesDc.setItems(categories);
     }
 
     @Subscribe
     public void onBeforeShow(BeforeShowEvent event) {
-// Убедитесь, что загрузчик инициализирован перед загрузкой данных
         Need need = getEditedEntity();
         if (need.getId() != null) {
             needDl.setEntityId(need.getId());
             needDl.load();
-        }        if (need.getId() == null) {
+        }
+        if (need.getId() == null) {
             initializeNewNeed(need);
             setLatestPeriod(need);
-            // Preselect default category if not set
             if (need.getCategory() == null) {
                 NeedCategory defaultCategory = testDataService.getDefaultCategory();
                 need.setCategory(defaultCategory);
             }
         }
 
-        // Ensure combo boxes are populated
         if (periodsDc.getItems().isEmpty()) {
             loadPeriods();
             periodField.setItems(periodsDc.getItems());
@@ -133,16 +127,20 @@ public class NeedDetailView extends StandardDetailView<Need> {
         }
     }
 
-//    @Subscribe("saveAction")
-//    public void onSaveAction(ActionPerformedEvent event) {
-//        try {
-//            if (saveChanges()) {  // Нужно исправить saveChanges
-//                close(StandardOutcome.SAVE);
-//            }
-//        } catch (ValidationException e) {
-//            // Ошибки уже показаны пользователю
-//        }
-//    }
+    @Subscribe("saveAction")
+    public void onSaveAction(ActionPerformedEvent event) {
+        // Проверяем валидность формы
+        ValidationErrors errors = validateView();
+
+        if (errors.isEmpty()) {
+            // Если ошибок нет - сохраняем и закрываем
+            Need need = getEditedEntity();
+            dataManager.save(need);
+            close(StandardOutcome.SAVE);
+        } else {
+            // Показываем ошибки пользователю
+        }
+    }
 
     @Subscribe("closeAction")
     public void onCloseAction(ActionPerformedEvent event) {

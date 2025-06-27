@@ -10,8 +10,9 @@ import io.jmix.securityflowui.role.annotation.ViewPolicy;
 import java.util.Arrays;
 import java.util.Collection;
 
-@ResourceRole(name = "Manager Role", code = "manager-role")
+@ResourceRole(name = "Manager Role", code = ManagerRole.CODE)
 public interface ManagerRole {
+    String CODE = "manager-role";
     @EntityPolicy(entityClass = NeedType.class, actions = {EntityPolicyAction.ALL})
     @EntityAttributePolicy(entityClass = NeedType.class, attributes = "*", action = EntityAttributePolicyAction.MODIFY)
     @EntityPolicy(entityClass = NeedCategory.class, actions = {EntityPolicyAction.ALL})

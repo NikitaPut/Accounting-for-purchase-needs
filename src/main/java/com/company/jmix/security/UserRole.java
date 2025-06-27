@@ -10,8 +10,9 @@ import io.jmix.security.role.annotation.ResourceRole;
 import io.jmix.securityflowui.role.annotation.MenuPolicy;
 import io.jmix.securityflowui.role.annotation.ViewPolicy;
 
-@ResourceRole(name = "User Role", code = "user-role")
+@ResourceRole(name = "User Role", code = UserRole.CODE)
 public interface UserRole {
+    String CODE = "user-role";
     @EntityPolicy(entityClass = Need.class,
             actions = {EntityPolicyAction.READ, EntityPolicyAction.CREATE, EntityPolicyAction.UPDATE, EntityPolicyAction.DELETE})
     @EntityAttributePolicy(entityClass = Need.class, attributes = "*", action = EntityAttributePolicyAction.MODIFY)

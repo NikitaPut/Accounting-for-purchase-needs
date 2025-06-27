@@ -8,40 +8,51 @@
                 <property name="period" fetchPlan="_instance_name"/>
                 <property name="category" fetchPlan="_instance_name"/>
             </fetchPlan>
-        <loader id="needDl">
-            <query>
-                <![CDATA[select e from Need e where e.id = :id]]>
-            </query>
-        </loader>
+            <loader id="needDl">
+                <query><![CDATA[select e from Need e where e.id = :id]]></query>
+            </loader>
         </instance>
         <collection id="periodsDc" class="com.company.jmix.entity.NeedPeriod"/>
         <collection id="categoriesDc" class="com.company.jmix.entity.NeedCategory"/>
     </data>
     <actions>
-        <action id="saveAction" type="detail_save" text="Сохранить"/>
-        <action id="closeAction" type="detail_close" text="Закрыть"/>
+        <action id="saveAction" type="detail_save"/>
+        <action id="closeAction" type="detail_close"/>
     </actions>
     <layout>
         <formLayout id="formLayout" width="100%">
-            <comboBox id="periodField" property="period"
+            <comboBox id="periodField"
                       dataContainer="needDc"
+                      property="period"
                       label="Период"
                       required="true"/>
-            <comboBox id="categoryField" property="category"
+            <comboBox id="categoryField"
                       dataContainer="needDc"
+                      property="category"
                       label="Категория"
                       required="true"/>
-            <integerField id="quantityField" property="quantity"
+            <integerField id="quantityField"
+                          dataContainer="needDc"
+                          property="quantity"
                           label="Количество"
-                          required="true"/>
-            <textArea id="justificationField" property="justification"
+                          required="true">
+                <validators>
+                    <positive/>
+                </validators>
+            </integerField>
+            <textField id="applicantField"
+                       dataContainer="needDc"
+                       property="applicant"
+                       label="Заявитель"
+                       required="true"/>
+            <textArea id="justificationField"
+                      dataContainer="needDc"
+                      property="justification"
                       label="Обоснование"
                       width="100%"/>
-            <textField id="applicantField" property="applicant"
-                       label="Заявитель"/>
             <hbox id="buttonPanel" classNames="buttons-panel">
-                <button id="saveBtn" action="saveAction" themeNames="primary"/>
-                <button id="closeBtn" action="closeAction"/>
+                <button id="saveBtn" action="saveAction" text="Сохранить" themeNames="primary"/>
+                <button id="closeBtn" action="closeAction" text="Закрыть"/>
             </hbox>
         </formLayout>
     </layout>
